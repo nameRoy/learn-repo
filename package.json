@@ -20,6 +20,9 @@
     "husky": "^9.0.11",
     "lerna": "^8.1.2"
   },
+  "engines": {
+    "node": ">=v18"
+  },
   "config": {
     "commitizen": {
       "path": "@commitlint/cz-commitlint"
