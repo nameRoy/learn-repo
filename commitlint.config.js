@@ -3,16 +3,7 @@ export default {
   parserPreset: "conventional-changelog-conventionalcommits",
   extends: ["@commitlint/config-conventional"],
   rules: {
-    "scope-enum": () => [
-      2,
-      "always",
-      fs
-        .readdirSync("packages")
-        .map((pkg) => {
-          return fs.statSync(`packages/${pkg}`).isDirectory() ? pkg : null;
-        })
-        .filter(Boolean),
-    ],
+    "scope-enum": () => [2, "always", ["app/service", "app/web"]],
     "type-enum": [
       2,
       "always",
