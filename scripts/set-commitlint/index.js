@@ -1,11 +1,22 @@
 import { exec } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-
+function getPackageJson() {
+  const content = fs.readFileSync("package.json", "utf-8");
+  const packageJson = JSON.parse(content);
+  return packageJson;
+}
 function isModuleExist(moduleName) {
   const root = process.cwd();
   const modulesPath = path.resolve(root, "node_modules", moduleName);
-  return fs.existsSync(modulesPath);
+  const packageJson = getPackageJson();
+  if (packageJson.dependencies && packageJson.dependencies[moduleName]) {
+    return fs.existsSync(modulesPath);
+  }
+  if (packageJson.devDependencies && packageJson.devDependencies[moduleName]) {
+    return fs.existsSync(modulesPath);
+  }
+  return false;
 }
 
 function getNodePackageTool() {
@@ -78,7 +89,7 @@ function xRun(xName, command) {
 
 function setHuskyConfig(packageTool) {
   const initHuskyCommand = xRun(packageTool, "husky init");
-  exec(initHuskyCommand, (error, stdout, stderr) => {
+  exec(initHuskyCommand, (error) => {
     if (error) {
       console.error(`exec error: ${error}`);
       return;
@@ -96,8 +107,7 @@ function setCommitlintConfig() {
 }
 
 async function setPackageJson() {
-  const content = await fs.promises.readFile("package.json", "utf-8");
-  const packageJson = JSON.parse(content);
+  const packageJson = getPackageJson();
   packageJson.scripts = {
     ...packageJson.scripts,
     commit: "cz",
@@ -121,17 +131,16 @@ async function main() {
     console.error("Node 版本过低，请升级至 v18 以上");
     process.exit(1);
   }
-  const commitlintModules = [
+  const needInstallModules = [
     "@commitlint/cli",
     "@commitlint/config-conventional",
     "@commitlint/cz-commitlint",
     "commitizen",
     "husky",
-  ];
-  for (const moduleName of commitlintModules) {
-    if (!isModuleExist(moduleName)) {
-      await installModule(moduleName, packageTool);
-    }
+  ].filter((moduleName) => !isModuleExist(moduleName));
+
+  for (let moduleName of needInstallModules) {
+    await installModule(moduleName, packageTool);
   }
   setHuskyConfig(packageTool);
   setCommitlintConfig();
